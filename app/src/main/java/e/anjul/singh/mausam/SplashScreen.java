@@ -19,7 +19,7 @@ public class SplashScreen extends AppCompatActivity {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(SplashScreen.this, "Welcome to mausam", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(SplashScreen.this, "Welcome to mausam", Toast.LENGTH_SHORT).show();
             }
         });
 

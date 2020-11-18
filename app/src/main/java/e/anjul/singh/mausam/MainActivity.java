@@ -1,7 +1,14 @@
 package e.anjul.singh.mausam;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
@@ -9,6 +16,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,6 +31,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     TextView tem, pressure, humidity, visibility, mint, maxt;
     JSONObject root, main;
     int visi,temp, pres, hum, mintt, maxtt;
+    private String state ="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +48,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initViews();
     }
+
+    private void getLocation() {
+        FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation()
+                    .addOnCompleteListener(new OnCompleteListener<Location>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Location> task) {
+                            geoCoder(task.getResult());
+                        }
+                    });
+            }
+            else {
+                Toast.makeText(this, "Turn on Location Access from settings", Toast.LENGTH_SHORT).show();
+            }
+        }
 
     private void initViews()
     {
@@ -77,6 +109,36 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.location).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getLocation();
+            }
+        });
+
+    }
+
+    private void geoCoder(Location location){
+        Geocoder gcd = new Geocoder(
+                this,
+                Locale.getDefault()
+        );
+        List<Address> addresses ;
+        try{
+            addresses= gcd.getFromLocation(
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    1
+            );
+            if(addresses!=null){
+                state = addresses.get(0).getLocality();
+                cityEditor.setText(state);
+                Toast.makeText(this, state+"", Toast.LENGTH_SHORT).show();
+            }
+        }
+        catch (Exception e) {
+            Toast.makeText(this,e.getMessage(),Toast.LENGTH_SHORT).show();
+        }
     }
 
     public  void jsonFun(String s)
@@ -206,5 +268,12 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(st);
             jsonFun(st);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finishAffinity();
+        finish();
     }
 }
